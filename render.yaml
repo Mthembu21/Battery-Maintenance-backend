@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: battery-maintenance-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        value: https://your-frontend-url.onrender.com
+      - key: PUBLIC_BASE_URL
+        value: https://your-backend-url.onrender.com
+    autoDeploy: true
