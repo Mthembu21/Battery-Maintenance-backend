@@ -39,69 +39,85 @@ const createSchema = z.object({
 });
 
 router.get('/', requireAuth, async (req, res) => {
-  const { customer, site, assetType, assetId, technician, from, to, serialNumber, customerSite } = req.query;
-  const filter = {};
-  
-  if (customer) filter.customerName = customer;
-  if (site) filter.site = site;
-  if (assetType) filter.assetType = assetType;
-  if (assetId) filter.assetId = assetId;
-  if (technician) filter.technicianName = technician;
-  if (serialNumber) filter.serialNumber = serialNumber;
-  
-  // Handle combined customerSite filter
-  if (customerSite && !customer && !site) {
-    const [customerPart, sitePart] = customerSite.split('/').map(s => s.trim());
-    if (customerPart) filter.customerName = { $regex: customerPart, $options: 'i' };
-    if (sitePart) filter.site = { $regex: sitePart, $options: 'i' };
-  }
-  
-  if (from || to) {
-    filter.maintenanceDate = {};
-    if (from) filter.maintenanceDate.$gte = new Date(from);
-    if (to) filter.maintenanceDate.$lte = new Date(to);
-  }
+  try {
+    const { customer, site, assetType, assetId, technician, from, to, serialNumber, customerSite } = req.query;
+    const filter = {};
+    
+    if (customer) filter.customerName = customer;
+    if (site) filter.site = site;
+    if (assetType) filter.assetType = assetType;
+    if (assetId) filter.assetId = assetId;
+    if (technician) filter.technicianName = technician;
+    if (serialNumber) filter.serialNumber = serialNumber;
+    
+    // Handle combined customerSite filter
+    if (customerSite && !customer && !site) {
+      const [customerPart, sitePart] = customerSite.split('/').map(s => s.trim());
+      if (customerPart) filter.customerName = { $regex: customerPart, $options: 'i' };
+      if (sitePart) filter.site = { $regex: sitePart, $options: 'i' };
+    }
+    
+    if (from || to) {
+      filter.maintenanceDate = {};
+      if (from) filter.maintenanceDate.$gte = new Date(from);
+      if (to) filter.maintenanceDate.$lte = new Date(to);
+    }
 
-  const rows = await MaintenanceRecord.find(filter).sort({ maintenanceDate: -1 }).limit(500);
-  return res.json(rows);
+    const rows = await MaintenanceRecord.find(filter).sort({ maintenanceDate: -1 }).limit(500);
+    return res.json(rows);
+  } catch (error) {
+    console.error('Error fetching maintenance records:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 router.post('/', requireAuth, requireRole('Technician', 'Supervisor'), upload.single('pdf'), async (req, res) => {
-  const parsed = createSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ message: 'Invalid payload' });
-  if (!req.file) return res.status(400).json({ message: 'PDF is required' });
+  try {
+    const parsed = createSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: 'Invalid payload' });
+    if (!req.file) return res.status(400).json({ message: 'PDF is required' });
 
-  const asset = await Battery.findOne({ assetId: parsed.data.assetId });
-  if (!asset) return res.status(400).json({ message: 'Asset not found' });
+    const asset = await Battery.findOne({ assetId: parsed.data.assetId });
+    if (!asset) return res.status(400).json({ message: 'Asset not found' });
 
-  // Handle customerSite field - split into customerName and site for storage
-  let customerName = '';
-  let site = '';
-  if (parsed.data.customerSite) {
-    const [customerPart, sitePart] = parsed.data.customerSite.split('/').map(s => s.trim());
-    customerName = customerPart || 'Unknown Customer';
-    site = sitePart || 'Unknown Site';
-  }
-
-  const weekKey = getWeekKey(parsed.data.maintenanceDate);
-  const fileUrl = `${process.env.PUBLIC_BASE_URL}/api/files/${req.file.filename}`;
-
-  const record = await MaintenanceRecord.create({
-    ...parsed.data,
-    customerName,
-    site,
-    asset: asset._id,
-    weekKey,
-    pdf: {
-      fileName: req.file.originalname,
-      fileUrl,
-      uploadedAt: new Date()
+    // Handle customerSite field - split into customerName and site for storage
+    let customerName = '';
+    let site = '';
+    if (parsed.data.customerSite) {
+      const [customerPart, sitePart] = parsed.data.customerSite.split('/').map(s => s.trim());
+      customerName = customerPart || 'Unknown Customer';
+      site = sitePart || 'Unknown Site';
     }
-  });
 
-  await Battery.updateOne({ _id: asset._id }, { $set: { status: 'Active' } });
+    const weekKey = getWeekKey(parsed.data.maintenanceDate);
+    const fileUrl = `${process.env.PUBLIC_BASE_URL}/api/files/${req.file.filename}`;
 
-  return res.status(201).json(record);
+    const record = await MaintenanceRecord.create({
+      ...parsed.data,
+      customerName,
+      site,
+      asset: asset._id,
+      weekKey,
+      pdf: {
+        fileName: req.file.originalname,
+        fileUrl,
+        uploadedAt: new Date()
+      }
+    });
+
+    await Battery.updateOne({ _id: asset._id }, { $set: { status: 'Active' } });
+
+    return res.status(201).json(record);
+  } catch (error) {
+    console.error('Error creating maintenance record:', error);
+    
+    // Handle duplicate key error for battery+weekKey
+    if (error.code === 11000 && error.keyPattern?.battery && error.keyPattern?.weekKey) {
+      return res.status(400).json({ message: 'Maintenance record already exists for this battery this week' });
+    }
+    
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 export default router;

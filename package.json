@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/server.js",
-    "start": "node src/server.js"
+    "dev": "node src/server.js",
+    "dev:watch": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "clean-port": "netstat -ano | findstr :4000 | for /f \"tokens=5\" %a in ('more') do taskkill /F /PID %a 2>nul || echo No process found on port 4000"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

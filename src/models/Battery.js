@@ -28,6 +28,5 @@ const BatterySchema = new mongoose.Schema(
 );
 
 BatterySchema.index({ customerSite: 1 });
-BatterySchema.index({ batteryCategory: 1 });
 
 export const Battery = mongoose.model('Battery', BatterySchema);
