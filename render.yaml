@@ -16,7 +16,7 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: CORS_ORIGIN
-        value: https://your-frontend-url.onrender.com
+        value: https://battery-maintenance-frontend.onrender.com
       - key: PUBLIC_BASE_URL
-        value: https://your-backend-url.onrender.com
+        value: https://battery-maintenance-backend.onrender.com
     autoDeploy: true

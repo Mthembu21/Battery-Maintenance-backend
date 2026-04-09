@@ -45,10 +45,10 @@ router.post('/', requireAuth, requireRole('Supervisor'), async (req, res) => {
     // Handle customerSite field - split into customer and site
     let customer = '';
     let site = '';
-    if (parsed.data.customerSite) {
-      const [customerPart, sitePart] = parsed.data.customerSite.split('/').map(s => s.trim());
-      customer = customerPart || 'Unknown Customer';
-      site = sitePart || 'Unknown Site';
+    if (parsed.data.customerSite && parsed.data.customerSite.trim()) {
+      const parts = parsed.data.customerSite.split('/').map(s => s.trim());
+      customer = parts[0] || 'Unknown Customer';
+      site = parts[1] || 'Unknown Site';
     } else {
       customer = 'Unknown Customer';
       site = 'Unknown Site';
