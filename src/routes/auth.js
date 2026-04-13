@@ -4,6 +4,20 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js'; // adjust path if needed
 
+const router = express.Router();
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1)
+});
+
+const signupSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  technicianName: z.string().min(2),
+  employeeId: z.string().min(2)
+});
+
 router.post('/login', async (req, res) => {
   try {
     console.log('LOGIN HIT:', req.body);
