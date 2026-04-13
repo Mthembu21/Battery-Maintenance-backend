@@ -28,6 +28,14 @@ export function createApp() {
   );
 
   app.get('/api/health', (req, res) => res.json({ ok: true }));
+  app.get('/api/test', (req, res) => {
+    console.log('=== TEST ROUTE HIT ===');
+    res.json({ 
+      ok: true, 
+      message: 'Backend is deployed and routes are working',
+      timestamp: new Date().toISOString()
+    });
+  });
 
   app.use('/api/auth', authRoutes);
   app.use('/api/batteries', batteryRoutes);
