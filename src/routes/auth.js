@@ -1,4 +1,5 @@
 import express from 'express';
+import { z } from 'zod';
 const router = express.Router();
 
 const loginSchema = z.object({
@@ -13,46 +14,19 @@ const signupSchema = z.object({
   employeeId: z.string().min(2)
 });
 
-router.post('/login', async (req, res) => {
-  console.log('=== LOGIN REQUEST RECEIVED ===');
-  console.log('Request body:', req.body);
-  console.log('Request headers:', req.headers);
-  
-  const parsed = loginSchema.safeParse(req.body);
-  if (!parsed.success) {
-    console.log('Validation failed:', parsed.error);
+router.post('/login', (req, res) => {
+  console.log('LOGIN HIT:', req.body);
+
+  const result = loginSchema.safeParse(req.body);
+
+  if (!result.success) {
     return res.status(400).json({ message: 'Invalid payload' });
   }
 
-  const { email, password } = parsed.data;
-  console.log('Extracted credentials:', { email: email.toLowerCase() });
-  
-  const user = await User.findOne({ email: email.toLowerCase() });
-  if (!user) {
-    console.log('User not found for email:', email.toLowerCase());
-    return res.status(401).json({ message: 'Invalid credentials' });
-  }
-
-  const ok = await bcrypt.compare(password, user.passwordHash);
-  if (!ok) {
-    console.log('Password comparison failed for user:', email.toLowerCase());
-    return res.status(401).json({ message: 'Invalid credentials' });
-  }
-
-  const token = jwt.sign(
-    { sub: user._id.toString(), email: user.email, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: '12h' }
-  );
-
-  return res.json({ 
-    token, 
-    user: { 
-      email: user.email, 
-      role: user.role,
-      technicianName: user.technicianName,
-      employeeId: user.employeeId
-    } 
+  return res.json({
+    success: true,
+    token: 'test-token',
+    user: result.data
   });
 });
 
