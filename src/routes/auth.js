@@ -1,11 +1,5 @@
-import { Router } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { z } from 'zod';
-import { User } from '../models/User.js';
-
-console.log('=== AUTH ROUTE LOADED ===');
-const router = Router();
+import express from 'express';
+const router = express.Router();
 
 const loginSchema = z.object({
   email: z.string().email(),
