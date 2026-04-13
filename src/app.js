@@ -37,7 +37,10 @@ export function createApp() {
     });
   });
 
+  console.log('=== MOUNTING AUTH ROUTES ===');
   app.use('/api/auth', authRoutes);
+  console.log('=== AUTH ROUTES MOUNTED ===');
+  
   app.use('/api/batteries', batteryRoutes);
   app.use('/api/maintenance', maintenanceRoutes);
   app.use('/api/files', filesRoutes);

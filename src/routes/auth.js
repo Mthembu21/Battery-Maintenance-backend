@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { User } from '../models/User.js';
 
+console.log('=== AUTH ROUTE LOADED ===');
 const router = Router();
 
 const loginSchema = z.object({
