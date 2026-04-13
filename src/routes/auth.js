@@ -19,15 +19,30 @@ const signupSchema = z.object({
 });
 
 router.post('/login', async (req, res) => {
+  console.log('=== LOGIN REQUEST RECEIVED ===');
+  console.log('Request body:', req.body);
+  console.log('Request headers:', req.headers);
+  
   const parsed = loginSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ message: 'Invalid payload' });
+  if (!parsed.success) {
+    console.log('Validation failed:', parsed.error);
+    return res.status(400).json({ message: 'Invalid payload' });
+  }
 
   const { email, password } = parsed.data;
+  console.log('Extracted credentials:', { email: email.toLowerCase() });
+  
   const user = await User.findOne({ email: email.toLowerCase() });
-  if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+  if (!user) {
+    console.log('User not found for email:', email.toLowerCase());
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
 
   const ok = await bcrypt.compare(password, user.passwordHash);
-  if (!ok) return res.status(401).json({ message: 'Invalid credentials' });
+  if (!ok) {
+    console.log('Password comparison failed for user:', email.toLowerCase());
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
 
   const token = jwt.sign(
     { sub: user._id.toString(), email: user.email, role: user.role },
