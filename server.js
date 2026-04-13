@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import cron from 'node-cron';
 import { createApp } from './src/app.js';
-import connectDb from './config/db.js';
-import { runMissedServiceDetection } from './jobs/missedServiceJob.js';
+import connectDb from './src/config/db.js';
+import { runMissedServiceDetection } from './src/jobs/missedServiceJob.js';
 
 const port = process.env.PORT || 4000;
 
