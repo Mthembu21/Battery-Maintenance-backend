@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "src/server.js",
+  "main": "server.js",
   "scripts": {
-    "dev": "node src/server.js",
-    "dev:watch": "node --watch src/server.js",
-    "start": "node src/server.js",
+    "dev": "node server.js",
+    "dev:watch": "node --watch server.js",
+    "start": "node server.js",
     "clean-port": "netstat -ano | findstr :4000 | for /f \"tokens=5\" %a in ('more') do taskkill /F /PID %a 2>nul || echo No process found on port 4000"
   },
   "dependencies": {
