@@ -11,6 +11,7 @@
     "clean-port": "netstat -ano | findstr :4000 | for /f \"tokens=5\" %a in ('more') do taskkill /F /PID %a 2>nul || echo No process found on port 4000"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
