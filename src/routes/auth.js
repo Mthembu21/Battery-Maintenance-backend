@@ -5,9 +5,19 @@ import { User } from '../models/User.js';
 
 const router = express.Router();
 
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is not set");
+}
+
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
+
 router.post('/login', async (req, res) => {
   try {
     console.log("LOGIN BODY:", req.body);
+
+    if (!req.body) {
+      throw new Error("Missing request body");
+    }
 
     const { email, password } = req.body;
 
@@ -48,25 +58,34 @@ router.post('/login', async (req, res) => {
     });
 
   } catch (err) {
-    console.error("LOGIN ERROR:", err);
+    console.error("LOGIN ERROR FULL:", err);
 
     return res.status(500).json({
-      message: "Server error",
-      error: err.message
+      message: "LOGIN FAILED",
+      error: err.message,
+      stack: err.stack
     });
   }
 });
 
 router.get('/seed-admin', async (req, res) => {
-  const passwordHash = await bcrypt.hash('Admin123!', 10);
+  try {
+    const passwordHash = await bcrypt.hash('Admin123!', 10);
 
-  const user = await User.create({
-    email: 'admin@epiroc.local',
-    passwordHash,
-    role: 'admin'
-  });
+    const user = await User.create({
+      email: 'admin@epiroc.local',
+      passwordHash,
+      role: 'admin'
+    });
 
-  res.json(user);
+    res.json(user);
+  } catch (err) {
+    console.error("SEED ERROR:", err);
+    return res.status(500).json({
+      message: "SEED FAILED",
+      error: err.message
+    });
+  }
 });
 
 export default router;
