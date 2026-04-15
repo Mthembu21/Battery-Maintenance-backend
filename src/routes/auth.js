@@ -1,78 +1,60 @@
 import express from 'express';
-import { z } from 'zod';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User.js'; // adjust path if needed
+import { User } from '../models/User.js';
 
 const router = express.Router();
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1)
-});
-
-const signupSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  technicianName: z.string().min(2),
-  employeeId: z.string().min(2)
-});
-
 router.post('/login', async (req, res) => {
   try {
-    console.log("BODY:", req.body);
+    console.log("LOGIN BODY:", req.body);
 
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    console.log("USER:", user);
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password required' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    console.log("FOUND USER:", user);
 
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    console.log("HASH:", user.passwordHash);
+    if (!user.passwordHash) {
+      return res.status(500).json({ message: 'Missing passwordHash in DB' });
+    }
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    console.log("PASSWORD MATCH:", ok);
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    console.log("PASSWORD MATCH:", isMatch);
 
-    if (!ok) {
+    if (!isMatch) {
       return res.status(401).json({ message: 'Invalid password' });
     }
 
-    res.json({ message: 'Login success' });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    return res.json({
+      token,
+      user: {
+        email: user.email,
+        role: user.role
+      }
+    });
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: 'Server error',
-      error: err.message,
-      stack: err.stack
+      error: err.message
     });
-  }
-});
-
-router.post('/signup', async (req, res) => {
-  try {
-    const result = signupSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ message: 'Invalid payload' });
-    }
-
-    const { email, password, technicianName, employeeId } = result.data;
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: 'User already exists' });
-
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    const user = await User.create({ email, passwordHash, role: 'admin', technicianName, employeeId });
-
-    res.status(201).json({ message: 'User created', user });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error' });
   }
 });
 
