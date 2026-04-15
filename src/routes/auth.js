@@ -11,33 +11,32 @@ router.post('/login', async (req, res) => {
 
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password required' });
+      return res.status(400).json({ message: "Email and password required" });
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
-    console.log("FOUND USER:", user);
+    console.log("USER FOUND:", user);
 
     if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+      return res.status(401).json({ message: "User not found" });
     }
 
     if (!user.passwordHash) {
-      return res.status(500).json({ message: 'Missing passwordHash in DB' });
+      return res.status(500).json({ message: "Missing passwordHash in DB" });
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     console.log("PASSWORD MATCH:", isMatch);
 
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid password' });
+      return res.status(401).json({ message: "Invalid password" });
     }
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '1d' }
+      { expiresIn: "1d" }
     );
 
     return res.json({
@@ -52,7 +51,7 @@ router.post('/login', async (req, res) => {
     console.error("LOGIN ERROR:", err);
 
     return res.status(500).json({
-      message: 'Server error',
+      message: "Server error",
       error: err.message
     });
   }
