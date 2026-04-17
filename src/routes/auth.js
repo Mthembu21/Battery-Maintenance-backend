@@ -191,6 +191,27 @@ router.get('/seed-admin', async (req, res) => {
   }
 });
 
+router.get('/seed-supervisor', async (req, res) => {
+  try {
+    const passwordHash = await bcrypt.hash('Supervisor123!', 10);
+
+    const user = await User.create({
+      email: 'supervisor@epiroc.local',
+      passwordHash,
+      role: 'Supervisor',
+      supervisorCode: 'SUP001'
+    });
+
+    res.json(user);
+  } catch (err) {
+    console.error("SEED SUPERVISOR ERROR:", err);
+    return res.status(500).json({
+      message: "SEED SUPERVISOR FAILED",
+      error: err.message
+    });
+  }
+});
+
 router.get('/test', (req, res) => {
   res.json({ message: 'Auth routes working' });
 });

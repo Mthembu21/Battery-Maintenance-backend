@@ -6,7 +6,8 @@ const UserSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     role: { type: String, required: true, enum: ['Technician', 'Supervisor', 'Manager'] },
     technicianName: { type: String, required: function() { return this.role === 'Technician'; } },
-    employeeId: { type: String, required: function() { return this.role === 'Technician'; }, unique: true, sparse: true }
+    employeeId: { type: String, required: function() { return this.role === 'Technician'; }, unique: true, sparse: true },
+    supervisorCode: { type: String, required: function() { return this.role === 'Supervisor'; }, unique: true, sparse: true }
   },
   { timestamps: true }
 );
