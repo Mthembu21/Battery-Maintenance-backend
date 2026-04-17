@@ -25,6 +25,7 @@ app.get('/api/health', (req, res) => {
 
 // AUTH ROUTES (THIS IS CRITICAL)
 app.use('/api/auth', authRoutes);
+console.log("Auth routes mounted at /api/auth");
 
 app.get('/api/test', (req, res) => {
   res.json({ ok: true });
