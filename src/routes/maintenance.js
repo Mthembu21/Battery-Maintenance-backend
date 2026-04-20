@@ -73,8 +73,17 @@ router.get('/', requireAuth, async (req, res) => {
 
 router.post('/', requireAuth, requireRole('Technician', 'Supervisor'), upload.single('pdf'), async (req, res) => {
   try {
+    console.log("=== MAINTENANCE SUBMISSION START ===");
+    console.log("REQUEST BODY:", JSON.stringify(req.body, null, 2));
+    console.log("REQUEST FILE:", req.file ? req.file.originalname : 'No file');
+    
     const parsed = createSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ message: 'Invalid payload' });
+    console.log("VALIDATION RESULT:", JSON.stringify(parsed, null, 2));
+    
+    if (!parsed.success) {
+      console.log("VALIDATION FAILED:", parsed.error);
+      return res.status(400).json({ message: 'Invalid payload', error: parsed.error });
+    }
     if (!req.file) return res.status(400).json({ message: 'PDF is required' });
 
     const asset = await Battery.findOne({ assetId: parsed.data.assetId });
