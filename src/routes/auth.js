@@ -324,6 +324,40 @@ router.get('/seed-manager', async (req, res) => {
   }
 });
 
+router.get('/fix-supervisor', async (req, res) => {
+  try {
+    // Find existing supervisor and add missing supervisorCode
+    const user = await User.findOneAndUpdate(
+      { email: 'supervisor@epiroc.local' },
+      { 
+        supervisorCode: 'SUP001',
+        role: 'Supervisor'
+      },
+      { new: true, upsert: true }
+    );
+
+    if (!user.passwordHash) {
+      const passwordHash = await bcrypt.hash('Supervisor123!', 10);
+      user.passwordHash = passwordHash;
+      await user.save();
+    }
+
+    console.log("FIXED SUPERVISOR:", user);
+    res.json({ message: "Supervisor fixed successfully", user: {
+      email: user.email,
+      role: user.role,
+      supervisorCode: user.supervisorCode,
+      hasPasswordHash: !!user.passwordHash
+    }});
+  } catch (err) {
+    console.error("FIX SUPERVISOR ERROR:", err);
+    return res.status(500).json({
+      message: "FIX SUPERVISOR FAILED",
+      error: err.message
+    });
+  }
+});
+
 router.get('/test', (req, res) => {
   res.json({ message: 'Auth routes working' });
 });
