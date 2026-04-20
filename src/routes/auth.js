@@ -358,6 +358,85 @@ router.get('/fix-supervisor', async (req, res) => {
   }
 });
 
+router.post('/signup', async (req, res) => {
+  try {
+    console.log("=== TECHNICIAN SIGNUP START ===");
+    console.log("REQUEST BODY:", JSON.stringify(req.body, null, 2));
+    
+    const { email, password, technicianName, employeeId } = req.body;
+    
+    // Validate required fields
+    if (!email || !password || !technicianName || !employeeId) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ 
+      $or: [
+        { email: email.toLowerCase() },
+        { employeeId: employeeId }
+      ]
+    });
+    
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+    
+    // Hash password
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+    
+    // Create new user
+    const user = new User({
+      email: email.toLowerCase(),
+      passwordHash,
+      role: 'Technician',
+      technicianName,
+      employeeId
+    });
+    
+    await user.save();
+    
+    console.log("TECHNICIAN CREATED:", {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      technicianName: user.technicianName,
+      employeeId: user.employeeId
+    });
+    
+    // Create JWT token
+    const token = jwt.sign(
+      { 
+        id: user._id,
+        email: user.email,
+        role: user.role
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
+    console.log("TOKEN CREATED SUCCESSFULLY");
+    
+    return res.json({
+      token,
+      user: {
+        email: user.email,
+        role: user.role,
+        technicianName: user.technicianName,
+        employeeId: user.employeeId
+      }
+    });
+    
+  } catch (err) {
+    console.error("SIGNUP ERROR:", err);
+    return res.status(500).json({ 
+      message: 'Internal server error',
+      error: err.message 
+    });
+  }
+});
+
 router.get('/test', (req, res) => {
   res.json({ message: 'Auth routes working' });
 });
