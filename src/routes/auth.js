@@ -365,39 +365,62 @@ router.post('/signup', async (req, res) => {
     
     const { email, password, technicianName, employeeId } = req.body;
     
-    // Validate required fields
-    if (!email || !password || !technicianName || !employeeId) {
-      return res.status(400).json({ message: 'All fields are required' });
+    // Validate required fields with detailed error messages
+    if (!email || !email.trim()) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+    if (!technicianName || !technicianName.trim()) {
+      return res.status(400).json({ message: 'Technician name is required' });
+    }
+    if (!employeeId || !employeeId.trim()) {
+      return res.status(400).json({ message: 'Employee ID is required' });
     }
     
     // Check if user already exists
     const existingUser = await User.findOne({ 
       $or: [
-        { email: email.toLowerCase() },
-        { employeeId: employeeId }
+        { email: email.toLowerCase().trim() },
+        { employeeId: employeeId.trim() }
       ]
     });
     
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      console.log("EXISTING USER FOUND:", existingUser.email, existingUser.employeeId);
+      let errorMessage = 'User already exists';
+      if (existingUser.email.toLowerCase() === email.toLowerCase().trim()) {
+        errorMessage = 'Email already registered';
+      } else if (existingUser.employeeId === employeeId.trim()) {
+        errorMessage = 'Employee ID already registered';
+      }
+      return res.status(400).json({ message: errorMessage });
     }
     
     // Hash password
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
     
-    // Create new user
+    // Create new user with explicit field validation
     const user = new User({
-      email: email.toLowerCase(),
+      email: email.toLowerCase().trim(),
       passwordHash,
       role: 'Technician',
-      technicianName,
-      employeeId
+      technicianName: technicianName.trim(),
+      employeeId: employeeId.trim()
+    });
+    
+    console.log("SAVING USER:", {
+      email: user.email,
+      role: user.role,
+      technicianName: user.technicianName,
+      employeeId: user.employeeId
     });
     
     await user.save();
     
-    console.log("TECHNICIAN CREATED:", {
+    console.log("TECHNICIAN CREATED SUCCESSFULLY:", {
       id: user._id,
       email: user.email,
       role: user.role,
@@ -430,6 +453,30 @@ router.post('/signup', async (req, res) => {
     
   } catch (err) {
     console.error("SIGNUP ERROR:", err);
+    console.error("ERROR DETAILS:", {
+      name: err.name,
+      message: err.message,
+      stack: err.stack
+    });
+    
+    // Handle specific MongoDB errors
+    if (err.code === 11000) {
+      // Duplicate key error
+      const field = Object.keys(err.keyValue)[0];
+      return res.status(400).json({ 
+        message: `${field} already exists`,
+        field: field
+      });
+    }
+    
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(e => e.message);
+      return res.status(400).json({ 
+        message: 'Validation failed',
+        errors: errors
+      });
+    }
+    
     return res.status(500).json({ 
       message: 'Internal server error',
       error: err.message 

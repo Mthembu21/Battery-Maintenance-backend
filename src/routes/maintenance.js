@@ -76,18 +76,53 @@ router.post('/', requireAuth, requireRole('Technician', 'Supervisor'), upload.si
     console.log("=== MAINTENANCE SUBMISSION START ===");
     console.log("REQUEST BODY:", JSON.stringify(req.body, null, 2));
     console.log("REQUEST FILE:", req.file ? req.file.originalname : 'No file');
+    console.log("REQUEST USER:", req.user ? { id: req.user.id, role: req.user.role } : 'No user');
     
+    if (!req.file) {
+      console.log("ERROR: No PDF file uploaded");
+      return res.status(400).json({ message: 'PDF is required' });
+    }
+    
+    // Enhanced validation with better error messages
     const parsed = createSchema.safeParse(req.body);
     console.log("VALIDATION RESULT:", JSON.stringify(parsed, null, 2));
     
     if (!parsed.success) {
       console.log("VALIDATION FAILED:", parsed.error);
-      return res.status(400).json({ message: 'Invalid payload', error: parsed.error });
+      const errorDetails = parsed.error.issues.map(issue => ({
+        field: issue.path.join('.'),
+        message: issue.message,
+        expected: issue.expected,
+        received: issue.received
+      }));
+      return res.status(400).json({ 
+        message: 'Invalid form data', 
+        errors: errorDetails
+      });
     }
-    if (!req.file) return res.status(400).json({ message: 'PDF is required' });
-
+    
+    // Check if asset exists with better error handling
+    console.log("LOOKING FOR ASSET:", parsed.data.assetId);
     const asset = await Battery.findOne({ assetId: parsed.data.assetId });
-    if (!asset) return res.status(400).json({ message: 'Asset not found' });
+    console.log("ASSET FOUND:", asset ? 'YES' : 'NO');
+    
+    if (!asset) {
+      console.log("ERROR: Asset not found:", parsed.data.assetId);
+      // Get available assets for better error message
+      const availableAssets = await Battery.find().select('assetId assetType serialNumber customerSite').limit(10);
+      console.log("AVAILABLE ASSETS:", availableAssets.map(a => a.assetId));
+      
+      return res.status(400).json({ 
+        message: 'Asset not found', 
+        assetId: parsed.data.assetId,
+        availableAssets: availableAssets.map(a => ({
+          assetId: a.assetId,
+          assetType: a.assetType,
+          serialNumber: a.serialNumber,
+          customerSite: a.customerSite
+        }))
+      });
+    }
 
     // Handle customerSite field - split into customerName and site for storage
     let customerName = '';
