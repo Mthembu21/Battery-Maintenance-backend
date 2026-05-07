@@ -81,7 +81,7 @@ router.patch('/:id', requireAuth, requireRole('Supervisor'), async (req, res) =>
   return res.json(updated);
 });
 
-router.delete('/:id', requireAuth, requireRole('Supervisor'), async (req, res) => {
+router.delete('/:id', requireAuth, requireRole('Supervisor', 'Manager'), async (req, res) => {
   const { id } = req.params;
   
   // Find the battery first to get details for logging
