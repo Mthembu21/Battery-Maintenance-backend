@@ -56,7 +56,13 @@ router.post('/', requireAuth, requireRole('Supervisor'), async (req, res) => {
     
     // Handle duplicate key error for assetId
     if (error.code === 11000 && error.keyPattern?.assetId) {
-      return res.status(400).json({ message: 'Asset ID already exists' });
+      const duplicateAssetId = error.keyValue?.assetId || 'Unknown';
+      console.log(`DUPLICATE ASSET ID ERROR: ${duplicateAssetId}`);
+      return res.status(400).json({ 
+        message: 'Asset ID already exists', 
+        duplicateAssetId,
+        suggestion: `Please use a different Asset ID. Asset ID "${duplicateAssetId}" is already in use.`
+      });
     }
     
     return res.status(500).json({ message: 'Internal server error' });
