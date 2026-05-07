@@ -55,6 +55,7 @@ app.get('/api/health-check', (req, res) => {
   res.json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
+    version: '2.0',
     routes: {
       auth: '/api/auth/*',
       batteries: '/api/batteries/*',
