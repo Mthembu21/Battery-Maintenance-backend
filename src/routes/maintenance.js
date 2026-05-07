@@ -148,6 +148,13 @@ router.post('/', requireAuth, requireRole('Technician', 'Supervisor'), upload.si
         uploadedAt: new Date()
       }
     });
+    
+    console.log("MAINTENANCE RECORD CREATED:", {
+      id: record._id,
+      assetId: parsed.data.assetId,
+      technicianName: parsed.data.technicianName,
+      weekKey
+    });
 
     await Battery.updateOne({ _id: asset._id }, { $set: { status: 'Active' } });
 
