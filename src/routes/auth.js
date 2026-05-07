@@ -489,7 +489,39 @@ router.get('/test', (req, res) => {
 });
 
 router.get('/signup-test', (req, res) => {
-  res.json({ message: 'Signup route is available', routes: ['POST /auth/signup', 'GET /auth/test'] });
+  res.json({ 
+    message: 'Signup route is available', 
+    routes: ['POST /auth/signup', 'GET /auth/test'],
+    timestamp: new Date().toISOString()
+  });
+});
+
+router.post('/signup-debug', async (req, res) => {
+  console.log("=== SIGNUP DEBUG ROUTE HIT ===");
+  console.log("REQUEST BODY:", JSON.stringify(req.body, null, 2));
+  console.log("REQUEST HEADERS:", JSON.stringify(req.headers, null, 2));
+  
+  try {
+    const { email, password, technicianName, employeeId } = req.body;
+    
+    // Simple validation
+    if (!email || !password || !technicianName || !employeeId) {
+      return res.status(400).json({ 
+        message: 'Missing required fields',
+        received: { email: !!email, password: !!password, technicianName: !!technicianName, employeeId: !!employeeId }
+      });
+    }
+    
+    // For now, just return success without creating user (for testing)
+    return res.json({ 
+      message: 'Debug signup successful',
+      received: { email, technicianName, employeeId },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error("DEBUG SIGNUP ERROR:", error);
+    return res.status(500).json({ message: 'Debug signup error', error: error.message });
+  }
 });
 
 export default router;
