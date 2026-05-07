@@ -43,22 +43,10 @@ router.post('/', requireAuth, requireRole('Supervisor'), async (req, res) => {
     const parsed = batterySchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: 'Invalid payload' });
 
-    // Handle customerSite field - split into customer and site
-    let customer = '';
-    let site = '';
-    if (parsed.data.customerSite && parsed.data.customerSite.trim()) {
-      const parts = parsed.data.customerSite.split('/').map(s => s.trim());
-      customer = parts[0] || 'Unknown Customer';
-      site = parts[1] || 'Unknown Site';
-    } else {
-      customer = 'Unknown Customer';
-      site = 'Unknown Site';
-    }
-
     const batteryData = {
       ...parsed.data,
-      customer,
-      site
+      customer: parsed.data.customerSite || 'Unknown',
+      site: parsed.data.customerSite || 'Unknown'
     };
 
     const created = await Battery.create(batteryData);
