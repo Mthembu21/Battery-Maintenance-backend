@@ -51,4 +51,16 @@ app.get('/api/test', (req, res) => {
   res.json({ ok: true });
 });
 
+app.get('/api/health-check', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    routes: {
+      auth: '/api/auth/*',
+      batteries: '/api/batteries/*',
+      maintenance: '/api/maintenance/*'
+    }
+  });
+});
+
 export default app;
