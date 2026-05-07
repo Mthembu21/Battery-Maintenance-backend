@@ -488,4 +488,8 @@ router.get('/test', (req, res) => {
   res.json({ message: 'Auth routes working' });
 });
 
+router.get('/signup-test', (req, res) => {
+  res.json({ message: 'Signup route is available', routes: ['POST /auth/signup', 'GET /auth/test'] });
+});
+
 export default router;
