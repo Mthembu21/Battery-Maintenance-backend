@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { Battery } from '../models/Battery.js';
+import { MaintenanceRecord } from '../models/MaintenanceRecord.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = Router();
@@ -78,6 +79,33 @@ router.patch('/:id', requireAuth, requireRole('Supervisor'), async (req, res) =>
   const updated = await Battery.findByIdAndUpdate(req.params.id, req.body, { new: true });
   if (!updated) return res.status(404).json({ message: 'Not found' });
   return res.json(updated);
+});
+
+router.delete('/:id', requireAuth, requireRole('Supervisor'), async (req, res) => {
+  const { id } = req.params;
+  
+  // Find the battery first to get details for logging
+  const battery = await Battery.findById(id);
+  if (!battery) return res.status(404).json({ message: 'Battery not found' });
+  
+  try {
+    // Delete all maintenance records associated with this battery
+    const deletedMaintenanceRecords = await MaintenanceRecord.deleteMany({ asset: id });
+    
+    // Delete the battery
+    const deletedBattery = await Battery.findByIdAndDelete(id);
+    
+    if (!deletedBattery) return res.status(404).json({ message: 'Battery not found' });
+    
+    return res.json({ 
+      message: 'Battery and all associated maintenance records deleted successfully',
+      battery: deletedBattery,
+      deletedMaintenanceRecordsCount: deletedMaintenanceRecords.deletedCount
+    });
+  } catch (error) {
+    console.error('Error deleting battery:', error);
+    return res.status(500).json({ message: 'Failed to delete battery' });
+  }
 });
 
 export default router;
