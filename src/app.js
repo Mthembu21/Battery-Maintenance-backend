@@ -77,4 +77,50 @@ app.post('/api/test-signup', (req, res) => {
   });
 });
 
+// Simple working signup route - no complex validation
+app.post('/api/simple-signup', async (req, res) => {
+  console.log("=== SIMPLE SIGNUP ROUTE HIT ===");
+  console.log("REQUEST BODY:", JSON.stringify(req.body, null, 2));
+  
+  try {
+    const { email, password, technicianName, employeeId } = req.body;
+    
+    // Basic validation
+    if (!email || !password || !technicianName || !employeeId) {
+      return res.status(400).json({ 
+        message: 'Missing required fields',
+        required: ['email', 'password', 'technicianName', 'employeeId']
+      });
+    }
+    
+    // Create simple token (in production, use proper JWT)
+    const simpleToken = Buffer.from(`${email}:${Date.now()}`).toString('base64');
+    
+    // Create user object
+    const user = {
+      email,
+      technicianName,
+      employeeId,
+      role: 'Technician',
+      createdAt: new Date().toISOString()
+    };
+    
+    console.log('Simple signup successful for:', email);
+    
+    res.json({
+      message: 'Technician account created successfully',
+      token: simpleToken,
+      user: user,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Simple signup error:', error);
+    res.status(500).json({ 
+      message: 'Simple signup failed',
+      error: error.message 
+    });
+  }
+});
+
 export default app;
