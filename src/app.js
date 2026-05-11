@@ -55,12 +55,25 @@ app.get('/api/health-check', (req, res) => {
   res.json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
-    version: '2.0',
+    version: '2.1',
     routes: {
       auth: '/api/auth/*',
       batteries: '/api/batteries/*',
-      maintenance: '/api/maintenance/*'
+      maintenance: '/api/maintenance/*',
+      availableAuthRoutes: ['GET /api/auth/test', 'GET /api/auth/signup-test', 'POST /api/auth/signup', 'POST /api/auth/signup-debug']
     }
+  });
+});
+
+// Add a simple test route to verify backend is working
+app.post('/api/test-signup', (req, res) => {
+  console.log("=== TEST SIGNUP ROUTE HIT ===");
+  console.log("REQUEST BODY:", JSON.stringify(req.body, null, 2));
+  
+  res.json({ 
+    message: 'Test signup route is working',
+    received: req.body,
+    timestamp: new Date().toISOString()
   });
 });
 
