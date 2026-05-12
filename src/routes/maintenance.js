@@ -171,4 +171,48 @@ router.post('/', requireAuth, requireRole('Technician', 'Supervisor'), upload.si
   }
 });
 
+// Delete maintenance record (Supervisor and Manager only)
+router.delete('/:id', requireAuth, requireRole('Supervisor', 'Manager'), async (req, res) => {
+  try {
+    console.log("=== DELETE MAINTENANCE RECORD START ===");
+    console.log("RECORD ID:", req.params.id);
+    console.log("REQUEST USER:", req.user ? { id: req.user.id, role: req.user.role } : 'No user');
+    
+    const recordId = req.params.id;
+    
+    // Find the maintenance record
+    const record = await MaintenanceRecord.findById(recordId);
+    if (!record) {
+      console.log("ERROR: Maintenance record not found");
+      return res.status(404).json({ message: 'Maintenance record not found' });
+    }
+    
+    console.log("FOUND RECORD:", {
+      id: record._id,
+      assetId: record.assetId,
+      technicianName: record.technicianName,
+      maintenanceDate: record.maintenanceDate
+    });
+    
+    // Delete the maintenance record
+    await MaintenanceRecord.findByIdAndDelete(recordId);
+    
+    console.log("✅ MAINTENANCE RECORD DELETED SUCCESSFULLY");
+    
+    return res.json({ 
+      message: 'Maintenance record deleted successfully',
+      deletedRecord: {
+        id: record._id,
+        assetId: record.assetId,
+        technicianName: record.technicianName,
+        maintenanceDate: record.maintenanceDate
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error deleting maintenance record:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 export default router;
