@@ -11,13 +11,33 @@ import { getWeekKey } from '../utils/week.js';
 const router = Router();
 
 const uploadDir = path.resolve(process.cwd(), 'uploads');
-// Ensure upload directory exists
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-  console.log('Created uploads directory:', uploadDir);
+// Ensure upload directory exists with proper error handling
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('Created uploads directory:', uploadDir);
+  }
+  // Test directory is writable
+  fs.accessSync(uploadDir, fs.constants.W_OK);
+  console.log('Uploads directory is writable:', uploadDir);
+} catch (error) {
+  console.error('Error with uploads directory:', error);
+  // Try to create with absolute path
+  const absoluteUploadDir = '/opt/render/project/uploads';
+  if (!fs.existsSync(absoluteUploadDir)) {
+    fs.mkdirSync(absoluteUploadDir, { recursive: true });
+    console.log('Created absolute uploads directory:', absoluteUploadDir);
+  }
 }
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
+  destination: (req, file, cb) => {
+    const dir = path.resolve(process.cwd(), 'uploads');
+    // Ensure directory exists before each upload
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
   filename: (req, file, cb) => {
     const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
     cb(null, `${Date.now()}_${safe}`);
