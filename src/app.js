@@ -47,6 +47,13 @@ console.log("Maintenance routes mounted at /api/maintenance");
 app.use('/api/reports', reportsRoutes);
 console.log("Reports routes mounted at /api/reports");
 
+// FILE SERVING ROUTE
+import path from 'path';
+import fs from 'fs';
+
+app.use('/api/files', express.static(path.resolve(process.cwd(), 'uploads')));
+console.log("File serving mounted at /api/files");
+
 app.get('/api/test', (req, res) => {
   res.json({ ok: true });
 });
