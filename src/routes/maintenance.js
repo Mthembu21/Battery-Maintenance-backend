@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { z } from 'zod';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { Battery } from '../models/Battery.js';
@@ -10,6 +11,11 @@ import { getWeekKey } from '../utils/week.js';
 const router = Router();
 
 const uploadDir = path.resolve(process.cwd(), 'uploads');
+// Ensure upload directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log('Created uploads directory:', uploadDir);
+}
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
