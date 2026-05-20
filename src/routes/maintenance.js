@@ -134,7 +134,7 @@ router.post('/', requireAuth, requireRole('Technician', 'Supervisor'), upload.si
     }
 
     const weekKey = getWeekKey(parsed.data.maintenanceDate);
-    const fileUrl = `${process.env.PUBLIC_BASE_URL}/api/files/${req.file.filename}`;
+    const fileUrl = `/api/files/${req.file.filename}`;
 
     const record = await MaintenanceRecord.create({
       ...parsed.data,
