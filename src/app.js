@@ -90,6 +90,17 @@ app.get('/api/files/debug/:filename', (req, res) => {
   }
 });
 
+// Add middleware to log file serving requests
+app.use('/api/files', (req, res, next) => {
+  console.log('File serving request:', {
+    method: req.method,
+    url: req.url,
+    originalUrl: req.originalUrl,
+    path: req.path
+  });
+  next();
+});
+
 app.use('/api/files', express.static(uploadsDir));
 console.log("File serving mounted at /api/files");
 
