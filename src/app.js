@@ -51,7 +51,46 @@ console.log("Reports routes mounted at /api/reports");
 import path from 'path';
 import fs from 'fs';
 
-app.use('/api/files', express.static(path.resolve(process.cwd(), 'uploads')));
+const uploadsDir = path.resolve(process.cwd(), 'uploads');
+console.log("Uploads directory path:", uploadsDir);
+console.log("Uploads directory exists:", fs.existsSync(uploadsDir));
+
+// Add debug endpoint to check file existence
+app.get('/api/files/debug/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(uploadsDir, filename);
+  console.log("Debug file check - filename:", filename);
+  console.log("Debug file check - full path:", filePath);
+  console.log("Debug file check - exists:", fs.existsSync(filePath));
+  
+  if (fs.existsSync(filePath)) {
+    const stats = fs.statSync(filePath);
+    res.json({
+      filename,
+      exists: true,
+      size: stats.size,
+      uploaded: stats.mtime,
+      path: filePath
+    });
+  } else {
+    // List all files in uploads directory
+    let files = [];
+    try {
+      files = fs.readdirSync(uploadsDir);
+    } catch (error) {
+      console.error("Error reading uploads directory:", error);
+    }
+    res.json({
+      filename,
+      exists: false,
+      uploadsDir,
+      availableFiles: files,
+      path: filePath
+    });
+  }
+});
+
+app.use('/api/files', express.static(uploadsDir));
 console.log("File serving mounted at /api/files");
 
 app.get('/api/test', (req, res) => {
